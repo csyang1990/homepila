@@ -64,6 +64,17 @@ def yfqrydb():
     ydfpay = pd.read_sql('select * from tbpay', yconnpila)
     yconnpila.close()
 
+    ydfpres['예약일자'] = ydfpres['예약일자'].str[:10]
+    ydfpres['시간'] = ydfpres['시간'].str[:5]
+    ydfcust['시작날짜'] = ydfcust['시작날짜'].str[:10]
+    ydfpeop['등록일자'] = ydfpeop['등록일자'].str[:10]
+    ydfregi['등록일자'] = ydfregi['등록일자'].str[:10]
+    ydfwork['사용일자'] = ydfwork['사용일자'].str[:10]
+    ydfwork['시작시간'] = ydfwork['시작시간'].str[11:16]
+    ydfschA['날짜'] = ydfschA['날짜'].str[:10]
+    ydfschB['날짜'] = ydfschB['날짜'].str[:10]
+    ydfschC['날짜'] = ydfschC['날짜'].str[:10]
+
     ysdtnew = time.strftime('%m-%d %H:%M:%S', time.localtime(os.path.getmtime(ydbfile)))
     # print('Netdt, Olddt : ', ysdtnew, ysdtnew)
     print(ysdtnew, ydfcust.shape, ydfpeop.shape, ydfregi.shape, ydfwork.shape, ydfpres.shape, ydfgood.shape, ydfmore.shape, ydfschA.shape, ydfschB.shape, ydfschC.shape, ydfpay.shape)
