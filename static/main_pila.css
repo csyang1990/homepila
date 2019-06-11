@@ -32,6 +32,22 @@ table{
     word-wrap:break-word;
 }
 
+#tab0, #fragment0 {
+  background: LemonChiffon;
+}
+#tab3, #fragment3 {
+  background: Gold;
+}
+#tab4, #fragment4 {
+  background: Chartreuse;
+}
+#tab7 {
+  background: Cyan;
+}
+#tab8 {
+  background: DeepSkyBlue;
+}
+
 
 
 /***

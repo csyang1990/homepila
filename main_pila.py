@@ -91,7 +91,12 @@ def yfqrydb():
     ydfworkgrpmrg = ydfregigrpmrg2.merge(ydfworkgrp, on=['고객이름'], how='left')
     ydfworkgrpmrg['남은횟수'] = ydfworkgrpmrg['상품총횟수'] - ydfworkgrpmrg['사용총시간']
 
-    
+    # BTN 생성
+    ydfworkgrpmrg['BUTTON'] = np.nan
+    ydfpeop['BUTTON'] = np.nan
+    ydfregi['BUTTON'] = np.nan
+    ydfwork['BUTTON'] = np.nan
+    ydfpres['BUTTON'] = np.nan
 
     # 출력물 구하기
     yjscust = ydfworkgrpmrg.to_json(orient='split')
@@ -189,8 +194,52 @@ def APAY():
     return yjspay
 
 
+
+@app.route('/APRESMODAL')
+def APRESMODAL():
+    s0 = request.args.get('ys0', type=str) # Modify or Create
+
+    sid = request.args.get('ys1', type=str)
+    sidcrt = datetime.now().strftime('%Y%m%dT%H%M%S')
+    s2 = request.args.get('ys2', type=str)
+    s3 = request.args.get('ys3', type=str)
+    s4 = request.args.get('ys4', type=str)
+    s5 = request.args.get('ys5', type=str)
+    s6 = request.args.get('ys6', type=str)
+    s7 = request.args.get('ys7', type=str)
+    s8 = request.args.get('ys8', type=str)
+    s9 = request.args.get('ys9', type=str)
+
+    ysip = request.remote_addr
+    ydatascrt = (sidcrt, s2, s3, s4, s5, s6, s7, s8, s9)
+    ydatasmod = (s2, s3, s4, s5, s6, s7, s8, s9, sid)
+    print('APRESMODAL : ', ysip, sidcrt, ydatasmod)
+
+    yconnpres = sqlite3.connect(ydbfile)
+    cur = yconnpres.cursor()
+    try:
+        if s0 == 'Create':
+            cur.execute("insert into tbpres values (?,?,?,?,?   ,?,?,?,?)", ydatascrt)
+        else:
+            cur.execute('update tbpres set 예약일자=?, 요일=?, 시간=?, 고객이름=?, 인원수=?, 직원이름=?, 예약시간=?, 예약메모=? where ID = ?', ydatasmod)
+        yconnpres.commit()
+    finally:
+        yconnpres.close()
+
+    # 새로 입력된 DB에서 Query
+    yfqrydb()
+    return yjspres
+
+
+
+
+
+
+
+
+
 if __name__ == '__main__':
-    ydbfile = r'E:\PycharmProjects\pila\yangdbpila\ydfpila.db'
+    ydbfile = r'E:\yangproject\homepila\yangdbpila\ydfpila.db'
 
     yfqrydb()
 
@@ -199,5 +248,5 @@ if __name__ == '__main__':
     ysched.add_job(yfgetpay, 'cron', day='1', args=[datetime.now().strftime('%Y-%m')])
     ysched.start()
 
-    # app.run()
-    app.run(host='0.0.0.0', port=5000)
+    app.run()
+    # app.run(host='0.0.0.0', port=5000)
