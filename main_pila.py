@@ -1,15 +1,45 @@
-from flask import Flask,request,render_template,abort
+from flask import Flask, request, render_template, session, redirect, url_for, flash  #abort
 from apscheduler.schedulers.background import BackgroundScheduler
 import pandas as pd
 import numpy as np
-from datetime import datetime #, timedelta
+from datetime import datetime , timedelta
 import time, os
 import sqlite3
 import json
+import logging
+from logging.handlers import TimedRotatingFileHandler
+import sys,linecache,select
 # pd.set_option('display.max_rows', 5)
 # pd.set_option('display.max_columns', 99)
 
 app = Flask(__name__)
+app.secret_key = "super secret key"
+
+
+def PrintException():
+    exc_type, exc_obj, tb = sys.exc_info()
+    f = tb.tb_frame
+    lineno = tb.tb_lineno
+    filename = f.f_code.co_filename
+    linecache.checkcache(filename)
+    line = linecache.getline(filename, lineno, f.f_globals)
+    print('YANG_EXCEPTION IN ({}, LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj))
+
+mylogger = logging.getLogger("[YANG]")
+# mylogger.setLevel(logging.INFO)
+mylogger.setLevel(logging.DEBUG)
+
+# myhandler = TimedRotatingFileHandler(path, when="s", interval=10, encoding="utf-8", backupCount=5)
+myhandler = TimedRotatingFileHandler("myloggingfile.log", when="D", interval=30, encoding="utf-8", backupCount=99)
+formatter = logging.Formatter('%(name)s [ %(levelname)s ] %(lineno)d - %(asctime)s - %(message)s')
+myhandler.setFormatter(formatter)
+mylogger.addHandler(myhandler)
+stream_hander = logging.StreamHandler()
+stream_hander.setFormatter(formatter)
+mylogger.addHandler(stream_hander)
+
+
+
 
 # yfile = r'E:\근무표\필라테스2.xlsx'
 # dfcust = pd.read_excel(yfile, sheet_name='고객정보')
@@ -146,12 +176,62 @@ def yfgetpay(ymonth):
 
 
 @app.route('/')
-def main():
-    return render_template('main_pila.html')
+@app.route('/LOGIN')
+def LOGIN():
+    session.clear()
+
+    sid = request.args.get('username', type=str)
+    spass = request.args.get('password', type=str)
+    print(sid, spass)
+
+    session['YID'] = sid
+    mylogger.debug("Login Try {0} {1}".format(request.remote_addr, sid))
+    if sid in yladmin:
+        return redirect(url_for('admin'))
+    elif sid in ylsusera:
+        return redirect(url_for('suser'))
+    else:
+        flash('유저네임이나 암호가 맞지 않습니다.')
+        return render_template('main_login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    #return redirect(url_for('index'))
+    return LOGIN()
+
+
+@app.route('/suser')
+def suser():
+    ysesskey = session['YID']
+    print('Session Key YID Value : ', ysesskey)
+    mylogger.debug("Login OK Suser {0} {1}".format(request.remote_addr, ysesskey))
+
+    if ysesskey in ylsusera:
+        return render_template('main_pila.html')
+    else:
+        flash('세션이(Suser) 만료되었습니다.')
+        return render_template('main_login.html')
 
 @app.route('/admin')
 def admin():
-    return render_template('main_pila_admin.html')
+    ysesskey = session['YID']
+    print('Session Key YID Value : ', ysesskey)
+    mylogger.debug("Login OK Admin {0} {1}".format(request.remote_addr, ysesskey))
+    if ysesskey in yladmin:
+        return render_template('main_pila_admin.html')
+    else:
+        flash('세션이(Admin) 만료되었습니다.')
+        return render_template('main_login.html')
+
+
+@app.before_request
+def make_session_permanent():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(minutes=1)
+
+
+
 
 @app.route('/AServer')
 def AServer():
@@ -193,7 +273,14 @@ def ASCHC():
 def APAY():
     return yjspay
 
-
+@app.route('/READLOG')
+def READLOG():
+    s0 = request.args.get('ys0', type=str)
+    print('APRESMODAL : ', request.remote_addr, s0)
+    yflog = r"E:\yangproject\homepila\myloggingfile.log"
+    ydflog = pd.read_table(yflog, names=['logs'])
+    ydflog2 = ydflog[ydflog['logs'].str.contains(s0, regex=True, na=False)]
+    return ydflog2.sort_values(['logs'], ascending=[False]).to_json(orient='split')[:500]
 
 @app.route('/APRESMODAL')
 def APRESMODAL():
@@ -220,9 +307,15 @@ def APRESMODAL():
     try:
         if s0 == 'Create':
             cur.execute("insert into tbpres values (?,?,?,?,?   ,?,?,?,?)", ydatascrt)
+            mylogger.info("예약관리 생성 {0} {1} {2}".format(ysip, "ID", ','.join(ydatascrt)))
         else:
             cur.execute('update tbpres set 예약일자=?, 요일=?, 시간=?, 고객이름=?, 인원수=?, 직원이름=?, 예약시간=?, 예약메모=? where ID = ?', ydatasmod)
+            mylogger.info("예약관리 수정 {0} {1} {2}".format(ysip, "ID", ','.join(ydatasmod)))
         yconnpres.commit()
+    except:
+        print('ERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORError:  예약관리')
+        mylogger.error('ERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORError:  예약관리')
+        PrintException()
     finally:
         yconnpres.close()
 
@@ -240,6 +333,11 @@ def APRESMODAL():
 
 if __name__ == '__main__':
     ydbfile = r'E:\yangproject\homepila\yangdbpila\ydfpila.db'
+    yladmin = ['yang', 'admin']
+    ylsusera = ['susera', 'suser']
+    ylsuserb = ['suserb']
+    ylsuserc = ['suserc']
+
 
     yfqrydb()
 
@@ -247,6 +345,7 @@ if __name__ == '__main__':
     ysched.add_job(yfqrydb, 'cron', minute='*/10')
     ysched.add_job(yfgetpay, 'cron', day='1', args=[datetime.now().strftime('%Y-%m')])
     ysched.start()
+
 
     app.run()
     # app.run(host='0.0.0.0', port=5000)

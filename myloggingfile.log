@@ -1,0 +1,16 @@
+[YANG] [ DEBUG ] 216 - 2019-06-14 16:38:09,392 - Login Admin 127.0.0.1 suser
+[YANG] [ DEBUG ] 188 - 2019-06-14 16:38:13,264 - Login 127.0.0.1 None
+[YANG] [ DEBUG ] 188 - 2019-06-14 16:38:15,878 - Login 127.0.0.1 admin
+[YANG] [ DEBUG ] 216 - 2019-06-14 16:38:15,890 - Login Admin 127.0.0.1 admin
+[YANG] [ DEBUG ] 188 - 2019-06-14 16:38:17,623 - Login 127.0.0.1 None
+[YANG] [ DEBUG ] 188 - 2019-06-14 16:38:22,101 - Login 127.0.0.1 suser
+[YANG] [ DEBUG ] 216 - 2019-06-14 16:38:22,114 - Login Admin 127.0.0.1 suser
+[YANG] [ DEBUG ] 220 - 2019-06-14 16:49:00,985 - Login OK Admin 127.0.0.1 suser
+[YANG] [ DEBUG ] 188 - 2019-06-14 16:49:08,647 - Login Try 127.0.0.1 None
+[YANG] [ DEBUG ] 188 - 2019-06-14 16:49:10,664 - Login Try 127.0.0.1 admin
+[YANG] [ DEBUG ] 220 - 2019-06-14 16:49:10,966 - Login OK Admin 127.0.0.1 admin
+[YANG] [ DEBUG ] 220 - 2019-06-14 16:49:14,469 - Login OK Admin 127.0.0.1 admin
+[YANG] [ DEBUG ] 220 - 2019-06-14 16:53:31,398 - Login OK Admin 127.0.0.1 admin
+[YANG] [ DEBUG ] 188 - 2019-06-14 16:53:34,640 - Login Try 127.0.0.1 None
+[YANG] [ DEBUG ] 188 - 2019-06-14 16:53:38,363 - Login Try 127.0.0.1 admin
+[YANG] [ DEBUG ] 220 - 2019-06-14 16:53:38,381 - Login OK Admin 127.0.0.1 admin
