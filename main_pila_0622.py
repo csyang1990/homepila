@@ -9,8 +9,6 @@ import json
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import sys,linecache,select
-from dateutil.relativedelta import relativedelta
-from calendar import monthrange
 # pd.set_option('display.max_rows', 5)
 # pd.set_option('display.max_columns', 99)
 
@@ -57,11 +55,11 @@ mylogger.addHandler(stream_hander)
 
 ysdtnew = ''
 yjscust = yjspeop = yjsregi = yjswork = yjspres = yjsgood = yjsmore = yjsschA = yjsschB = yjsschC = yjspay = ''
-ydfworkgrpmrg = ydfregi = ydfwork = ydfpeop = ydfmore = ydfpay = ydfwork3piv = pd.DataFrame()
+ydfworkgrpmrg = ydfregi = ydfwork = ydfpeop = ydfmore = pd.DataFrame()
 def yfqrydb():
     global ysdtnew
-    global yjscust, yjspeop, yjsregi, yjswork, yjspres, yjsgood, yjsmore, yjsschA, yjsschB, yjsschC, yjspay
-    global ydfworkgrpmrg, ydfregi, ydfwork, ydfpeop, ydfmore, ydfpay, ydfwork3piv
+    global ydfworkgrpmrg, yjscust, yjspeop, yjsregi, yjswork, yjspres, yjsgood, yjsmore, yjsschA, yjsschB, yjsschC, yjspay
+    global ydfregi, ydfwork, ydfpeop, ydfmore
 
 
     # ydbfile = r'E:\yangdbpila\ydfpila.db'
@@ -94,7 +92,7 @@ def yfqrydb():
     ydfschA = pd.read_sql('select * from tbschA', yconnpila)
     ydfschB = pd.read_sql('select * from tbschB', yconnpila)
     ydfschC = pd.read_sql('select * from tbschC', yconnpila)
-    # ydfpay = pd.read_sql('select * from tbpay', yconnpila)
+    ydfpay = pd.read_sql('select * from tbpay', yconnpila)
     yconnpila.close()
 
     ydfpres['예약일자'] = ydfpres['예약일자'].str[:10]
@@ -124,47 +122,6 @@ def yfqrydb():
     ydfworkgrpmrg = ydfregigrpmrg2.merge(ydfworkgrp, on=['고객이름'], how='left')
     ydfworkgrpmrg['남은횟수'] = ydfworkgrpmrg['상품총횟수'] - ydfworkgrpmrg['사용총시간']
 
-    # PAY 구하기
-    # 사용관리 + 직원관리  on=['직원이름', '직급']  ====> 직원관리에서 이전 직급 관리 안됨
-    # ====> 사용관리에서 직급을 수동으로 제대로 관리하기 = 사용관리만으로 직원별/직급별 급여 확인 가능
-    ydfwork2 = ydfwork.copy()
-    ydfwork2['상품종류2'] = ydfwork2['상품종류'].str[:2]
-    ydfwork2['상품종류2'] = ydfwork2['상품종류2'].str.replace('개인|비기|기본', '일반', regex=True)
-    ydfwork2['상품종류2'] = ydfwork2['상품종류2'] + ydfwork2['내외']
-    ydfwork2['사용월'] = ydfwork2['사용일자'].str[:7]
-    ydfwork2piv = ydfwork2.pivot_table(values='사용시간', index=['직원이름', '사용월', '직급'], columns='상품종류2', aggfunc='sum').reset_index()
-    ydfwork2piv['총일한시간'] = ydfwork2piv.sum(axis=1)
-    ydfwork2piv['120초과'] = np.where(ydfwork2piv['총일한시간'] > 120, ydfwork2piv['총일한시간'] - 120, 0)
-    ydfwork2piv['100초과'] = np.where((ydfwork2piv['총일한시간'] > 100) & (ydfwork2piv['총일한시간'] <= 120), ydfwork2piv['총일한시간'] - 100, 0)
-    # Merge하기 - 센터
-    # ydfpeoppiv = ydfpeop[['직원이름', '센터', '직급']].merge(ydfwork2piv, on=['직원이름', '직급'], how='left')
-    ydfpeoppiv = ydfwork2piv.merge(ydfpeop[['직원이름', '센터']], on=['직원이름'], how='left')
-    # Merge하기 - 수당정보
-    ydfpeoppivmrg = ydfpeoppiv.merge(ydfmore, on=['센터', '직급'], how='left').fillna(0)
-    # 이번날짜 반영
-    # ynow = datetime.now()
-    # ythismonthdays = monthrange(ynow.year, ynow.month)
-    ydfpeoppivmrg['월급여'] = ydfpeoppivmrg['기본급'] \
-                           + ydfpeoppivmrg['일반내'] * ydfpeoppivmrg['내일반'] + ydfpeoppivmrg['일반외'] * ydfpeoppivmrg['외일반'] \
-                           + ydfpeoppivmrg['듀엣내'] * ydfpeoppivmrg['내듀엣'] + ydfpeoppivmrg['듀엣외'] * ydfpeoppivmrg['외듀엣'] \
-                           + ydfpeoppivmrg['그룹내'] * ydfpeoppivmrg['내그룹'] + ydfpeoppivmrg['그룹외'] * ydfpeoppivmrg['외그룹'] \
-                           + ydfpeoppivmrg['100초과'] * ydfpeoppivmrg['초과100'] + ydfpeoppivmrg['120초과'] * ydfpeoppivmrg['초과120']
-    ydfpay = ydfpeoppivmrg.sort_values(['사용월','센터','직원이름'], ascending=[False, True, True]).copy()
-
-    # PAY관련 고객별,상품별,월별 일한시간 계산
-    ydfwork3piv = ydfwork2.pivot_table(values='사용시간', index=['직원이름', '고객이름', '사용월'], columns='상품종류2', aggfunc='sum').reset_index()
-    ydfwork3piv['총일한시간'] = ydfwork3piv.sum(axis=1)
-
-    # 근무표
-    ydstart = '2019-01-01'
-    yiperiods = 31
-    # ylpeopa = ydfpeop[ydfpeop['센터']=='센터A']['직원이름'].tolist()
-    ylpeop = ydfpeop[['직원이름', '센터']]  # .tolist()
-    ydtrng = pd.date_range(start=ydstart, periods=yiperiods, freq='D')
-    ydfsch = pd.DataFrame('일', index=ylpeop, columns=ydtrng)
-
-
-
     # BTN 생성
     ydfworkgrpmrg['BUTTON'] = np.nan
     ydfpeop['BUTTON'] = np.nan
@@ -173,11 +130,10 @@ def yfqrydb():
     ydfpres['BUTTON'] = np.nan
 
     # 출력물 구하기
-    yslastmonth = (datetime.now() - relativedelta(months=1)).strftime('%Y-%m')
     yjscust = ydfworkgrpmrg.to_json(orient='split')
     yjspeop = ydfpeop.to_json(orient='split')
-    yjsregi = ydfregi[ydfregi['등록일자'] >= yslastmonth].to_json(orient='split')
-    yjswork = ydfwork[ydfwork['사용일자'] >= yslastmonth].to_json(orient='split')
+    yjsregi = ydfregi.to_json(orient='split')
+    yjswork = ydfwork.to_json(orient='split')
     yjspres = ydfpres.to_json(orient='split')
     yjsgood = ydfgood.to_json(orient='split')
     yjsmore = ydfmore.to_json(orient='split')
@@ -185,7 +141,6 @@ def yfqrydb():
     yjsschB = ydfschB.to_json(orient='split')
     yjsschC = ydfschC.to_json(orient='split')
     yjspay = ydfpay.to_json(orient='split')
-
     
 
 # yjspeoppivmrg = ''
@@ -341,20 +296,19 @@ def AMAN72():
     s0 = request.args.get('ys0', type=str)
     s1 = request.args.get('ys1', type=str)
     print('AMAN72 : ', request.remote_addr, s0, s1)
-    ydfpay2 = ydfpay[(ydfpay['직원이름'] == s0) & (ydfpay['사용월'].str.contains(s1, regex=True, na=False))].drop(columns=['직원이름'])
-    return ydfpay2.to_json(orient='split')
+    ydfworkgrpmrg2 = ydfworkgrpmrg[(ydfworkgrpmrg['고객이름'] == s0) & (ydfworkgrpmrg['logs'].str.contains(s1, regex=True, na=False))].drop(columns=['BUTTON', 'ID'])
+    return ydfworkgrpmrg2.to_json(orient='split')
 @app.route('/AMAN721')
 def AMAN721():
     s0 = request.args.get('ys0', type=str)
     s1 = request.args.get('ys1', type=str)
-    ydfwork3piv2 = ydfwork3piv[(ydfwork3piv['직원이름'] == s0) & (ydfwork3piv['사용월'].str.contains(s1, regex=True, na=False))].drop(columns=['직원이름'])
-    # ydfregi2 = ydfwork3piv[ydfwork3piv['직원이름'] == s0].drop(columns=['BUTTON', '직원이름', 'ID'])
-    return ydfwork3piv2.sort_values(['사용월'], ascending=[False]).to_json(orient='split')
+    ydfregi2 = ydfregi[(ydfregi['고객이름'] == s0) & (ydfworkgrpmrg['logs'].str.contains(s1, regex=True, na=False))].drop(columns=['BUTTON', '고객이름', 'ID'])
+    return ydfregi2.sort_values(['등록일자'], ascending=[False]).to_json(orient='split')
 @app.route('/AMAN722')
 def AMAN722():
     s0 = request.args.get('ys0', type=str)
     s1 = request.args.get('ys1', type=str)
-    ydfwork2 = ydfwork[(ydfwork['직원이름'] == s0) & (ydfwork['사용일자'].str.contains(s1, regex=True, na=False))].drop(columns=['BUTTON', '직원이름', 'ID'])
+    ydfwork2 = ydfwork[(ydfwork['고객이름'] == s0) & (ydfworkgrpmrg['logs'].str.contains(s1, regex=True, na=False))].drop(columns=['BUTTON', '고객이름', 'ID'])
     return ydfwork2.sort_values(['사용일자'], ascending=[False]).to_json(orient='split')
 
 

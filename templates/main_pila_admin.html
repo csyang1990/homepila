@@ -67,6 +67,7 @@
 		<ul>
 			<li id="tab0"><a href="#fragment0"><span style="font-weight: bolder">예약관리</span></a></li>
             <li id="tab1"><a href="#fragment1"><span style="font-weight: bolder">고객관리</span></a></li>
+            <li id="tab12"><a href="#fragment12"><span style="font-weight: bolder">고객별관리</span></a></li>
             <li id="tab2"><a href="#fragment2"><span style="font-weight: bolder">직원관리</span></a></li>
             <li id="tab3"><a href="#fragment3"><span style="font-weight: bolder">등록관리</span></a></li>
             <li id="tab4"><a href="#fragment4"><span style="font-weight: bolder">사용관리</span></a></li>
@@ -74,6 +75,7 @@
 
             <li id="tab6"><a href="#fragment6"><span style="font-weight: bolder">수당정보</span></a></li>
             <li id="tab7"><a href="#fragment7"><span style="font-weight: bolder">월급여</span></a></li>
+            <li id="tab72"><a href="#fragment72"><span style="font-weight: bolder">직원별월급여</span></a></li>
             <li id="tab8"><a href="#fragment8"><span style="font-weight: bolder">근무표</span></a></li>
 
 		</ul>
@@ -83,6 +85,30 @@
 		<div id="fragment1">
             <div id="ydiv1"></div>
         </div>
+        <div id="fragment12">
+            <div class="container-fluid">
+                <form class="form-inline">
+                    <div class="form-group">
+                        <label class="col-form-label">고객이름</label>
+                        <input type="text" id="qry_filter12" value="" placeholder="고객이름">
+                        <input class = "btn btn-primary" type="button" id="btn_qry12" value="조회">
+                    </div>
+                </form>
+            </div>
+            <div id="ydiv12"></div>
+            <hr>
+            <div class="row">
+                <div class="col-sm-6">
+                    등록내역
+                    <div id="ydiv121"></div>
+                </div>
+                <div class="col-sm-6">
+                    사용내역
+                    <div id="ydiv122"></div>
+                </div>
+            </div>
+
+        </div>
         <div id="fragment2">
             <div id="ydiv2"></div>
         </div>
@@ -91,7 +117,7 @@
                 <form class="form-inline">
                     <div class="form-group">
                         <label class="col-form-label">월 선택</label>
-                        <input type="text" id="qry_filter31" value="" placeholder="Filter할 문구(2019-05)" style="width:200px;">
+                        <input type="text" id="qry_filter31" value="" placeholder="Filter할 문구(2019-05)">
                         <input class = "btn btn-primary" type="button" id="btn_qry31" value="다른달 조회">
                     </div>
                 </form>
@@ -120,7 +146,31 @@
         <div id="fragment7">
             <div id="ydiv7"></div>
         </div>
-
+        <div id="fragment72">
+            <div class="container-fluid">
+                <form class="form-inline">
+                    <div class="form-group">
+                        <label class="col-form-label">직원이름</label>
+                        <input type="text" id="qry_filter721" value="" placeholder="직원이름">
+                        <label class="col-form-label">년월(2019-05)</label>
+                        <input type="text" id="qry_filter722" value="" placeholder="년월">
+                        <input class = "btn btn-primary" type="button" id="btn_qry72" value="급여조회">
+                    </div>
+                </form>
+            </div>
+            <div id="ydiv72"></div>
+            <hr>
+            <div class="row">
+                <div class="col-sm-6">
+                    사용내역-고객별분류
+                    <div id="ydiv721"></div>
+                </div>
+                <div class="col-sm-6">
+                    사용내역
+                    <div id="ydiv722"></div>
+                </div>
+            </div>
+        </div>
         <div id="fragment8">
             <div class="container-fluid">
                 <form class="form-inline">
